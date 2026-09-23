@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy Birthday Dad</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            overflow: hidden; /* Prevent scrolling during animations */
+        }
+
+        h1, h2, h3 {
+            font-family: 'Nunito', sans-serif;
+        }
+
+        /* Floating Background Emojis */
+        .bg-emojis {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 0;
+        }
+        
+        .floating-emoji {
+            position: absolute;
+            bottom: -10%;
+            animation: floatUp linear forwards;
+            opacity: 0.8;
+            user-select: none;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(0) rotate(0deg) scale(0.8); opacity: 0; }
+            10% { opacity: 1; transform: translateY(-10vh) rotate(15deg) scale(1); }
+            90% { opacity: 1; }
+            100% { transform: translateY(-110vh) rotate(360deg) scale(1.2); opacity: 0; }
+        }
+
+        .scene-container {
+            position: relative;
+            width: 100%;
+            height: 60vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        .env-wrapper {
+            width: 320px;
+            height: 220px;
+            position: relative;
+            perspective: 1200px;
+            filter: drop-shadow(0 15px 25px rgba(0,0,0,0.25));
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Fade out class for the envelope */
+        .env-wrapper.fade-out {
+            opacity: 0;
+            transform: scale(0.5) translateY(100px);
+            pointer-events: none;
+        }
+
+        .env-back {
+            position: absolute;
+            inset: 0;
+            background-color: #c2410c; 
+            border-radius: 8px;
+            z-index: 1;
+        }
+
+        /* Envelope Front Panels built with CSS Polygons */
+        .env-front-left {
+            position: absolute;
+            left: 0; bottom: 0;
+            width: 160px; height: 220px;
+            background-color: #ea580c; 
+            clip-path: polygon(0 0, 100% 50%, 0 100%);
+            z-index: 3;
+            border-bottom-left-radius: 8px;
+        }
+
+        .env-front-right {
+            position: absolute;
+            right: 0; bottom: 0;
+            width: 160px; height: 220px;
+            background-color: #ea580c;
+            clip-path: polygon(100% 0, 0 50%, 100% 100%);
+            z-index: 3;
+            border-bottom-right-radius: 8px;
+        }
+
+        .env-front-bottom {
+            position: absolute;
+            bottom: 0; left: 0;
+            width: 320px; height: 130px;
+            background-color: #f97316; 
+            clip-path: polygon(0 100%, 50% 0, 100% 100%);
+            z-index: 4;
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
+        }
+
+        /* The Flap that opens */
+        .env-flap {
+            position: absolute;
+            top: 0; left: 0;
+            width: 320px; height: 140px;
+            background-color: #fb923c; 
+            clip-path: polygon(0 0, 100% 0, 50% 100%);
+            z-index: 5;
+            transform-origin: top;
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Class added via JS to rotate the flap up */
+        .env-flap.open {
+            transform: rotateX(180deg);
+            z-index: 2; 
+        }
+
+        .final-card-wrapper {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.7);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 1s cubic-bezier(0.34, 1.56, 0.64, 1); 
+            z-index: 20;
+            width: 92%;
+            max-width: 420px;
+        }
+
+        .final-card-wrapper.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+            pointer-events: auto;
+        }
+
+        .card-inner {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            /* Adjusted padding: less on sides, significantly more on bottom to clear the button */
+            padding: 1.5rem 1.25rem 3.5rem 1.25rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 4px rgba(255,255,255,0.5);
+            text-align: center;
+        }
+
+        .photo-frame {
+            width: 100%;
+            aspect-ratio: 1/1;
+            border-radius: 16px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            border: 4px solid white;
+            background-color: #f1f5f9;
+        }
+
+        .photo-frame img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center top;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex flex-col items-center justify-center relative">
+
+    <audio id="bgMusic" loop>
+        <source src="happy-birthday.mp3" type="audio/mpeg">
+    </audio>
+
+    <div id="bg-emojis" class="bg-emojis"></div>
+    
+    <div class="scene-container">
+        <div id="envelope" class="env-wrapper">
+            <div class="env-back"></div>
+            <div class="absolute bottom-3 left-3 right-3 h-32 bg-white rounded-md z-[2] shadow-inner"></div>
+            <div class="env-front-left"></div>
+            <div class="env-front-right"></div>
+            <div class="env-front-bottom"></div>
+            <div id="flap" class="env-flap shadow-md"></div>
+        </div>
+
+        <div id="finalCard" class="final-card-wrapper">
+            <div class="card-inner">
+                
+                <div class="photo-frame">
+                    <img src="dad-photo.jpeg" alt="Dad's Photo">
+                </div>
+
+                <h1 class="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-pink-600 mb-2 leading-tight">
+                    Happy Birthday<br>Dad!
+                </h1>
+                
+                <!-- Text size slightly reduced on mobile (text-sm) to ensure it fits without crowding -->
+                <p class="text-slate-600 text-sm sm:text-base font-medium leading-relaxed mt-2">
+                    Wishing you the happiest birthday ever. Thank you for all your sacrifices, for always having my back, and for being my biggest role model and strength.
+                    <br><br>
+                    <span class="font-bold text-slate-800 text-base sm:text-lg">I love you, My Big BOSS!</span>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pushed button closer to the bottom to avoid overlapping the card text -->
+    <div class="absolute bottom-2 left-0 right-0 flex justify-center z-50">
+        <button id="actionBtn" class="w-16 h-16 sm:w-20 sm:h-20 text-3xl sm:text-4xl bg-white rounded-full shadow-2xl flex items-center justify-center transform transition-all hover:scale-110 hover:shadow-orange-500/50 active:scale-95 focus:outline-none cursor-pointer border-4 border-white/50">
+            😊
+        </button>
+    </div>
+
+    <script>
+        const actionBtn = document.getElementById('actionBtn');
+        const flap = document.getElementById('flap');
+        const envelope = document.getElementById('envelope');
+        const finalCard = document.getElementById('finalCard');
+        const bgContainer = document.getElementById('bg-emojis');
+        const bgMusic = document.getElementById('bgMusic');
+        
+        let hasOpened = false;
+
+        const bgEmojiList = ['🎉', '🎈', '🎂', '✨', '🎁'];
+        function spawnFloatingEmoji() {
+            const el = document.createElement('div');
+            el.className = 'floating-emoji';
+            el.innerText = bgEmojiList[Math.floor(Math.random() * bgEmojiList.length)];
+            el.style.left = Math.random() * 90 + 5 + 'vw'; 
+            el.style.fontSize = (Math.random() * 1.5 + 1.5) + 'rem'; 
+            el.style.animationDuration = (Math.random() * 5 + 7) + 's'; 
+            
+            bgContainer.appendChild(el);
+            setTimeout(() => el.remove(), 12500);
+        }
+
+        for(let i=0; i<10; i++) setTimeout(spawnFloatingEmoji, i * 400);
+        setInterval(spawnFloatingEmoji, 600);
+
+        actionBtn.addEventListener('click', () => {
+            if (!hasOpened) {
+                hasOpened = true;
+
+                // Make the button fade out and prevent further clicks
+                actionBtn.style.opacity = '0';
+                actionBtn.style.pointerEvents = 'none';
+
+                bgMusic.play().catch(error => {
+                    console.log("Music play prevented or file missing.");
+                });
+                
+                fireConfetti();
+                setInterval(fireConfetti, 3000); 
+
+                flap.classList.add('open');
+
+                setTimeout(() => {
+                    envelope.classList.add('fade-out');
+                    
+                    setTimeout(() => {
+                        finalCard.classList.add('show');
+                    }, 600); 
+
+                }, 1000); 
+                
+            }
+        });
+
+        function fireConfetti() {
+            const count = 200;
+            const defaults = {
+                origin: { y: 0.7 },
+                zIndex: 100,
+                spread: 100
+            };
+
+            function fire(particleRatio, opts) {
+                confetti(Object.assign({}, defaults, opts, {
+                    particleCount: Math.floor(count * particleRatio)
+                }));
+            }
+
+            fire(0.25, { spread: 26, startVelocity: 55 });
+            fire(0.2, { spread: 60 });
+            fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
+            fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
+            fire(0.1, { spread: 120, startVelocity: 45 });
+        }
+    </script>
+</body>
+</html>
